@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:22-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ WORKDIR /app/server
 RUN yarn install
 RUN yarn build
 
-FROM --platform=linux/amd64 node:22-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
