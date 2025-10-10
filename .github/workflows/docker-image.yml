@@ -114,12 +114,12 @@ jobs:
             CLIENT_FILE_CHANGED=${{ env.CLIENT_FILE_CHANGED }} && \
             mkdir -p ~/inear && \
             cd ~/inear && \
-            docker system prune -af && \
+            sudo docker system prune -af && \
             if [ \"\$SERVER_FILE_CHANGED\" == true ]; then
-              docker pull ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest && \
-              ./backend-deploy.sh
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest && \
+              sudo ./backend-deploy.sh
             fi
             if [ \"\$CLIENT_FILE_CHANGED\" == true ]; then
-              ./frontend-deploy.sh
+              sudo ./frontend-deploy.sh
             fi
           "
