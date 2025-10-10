@@ -50,7 +50,7 @@ jobs:
       - name: Build and tag Docker image
         run: |
           if [ "${{ env.SERVER_FILE_CHANGED }}" == 'true' ]; then
-            docker build -f server/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }} ./
+            docker build -f server/Dockerfile --platform linux/arm64 -t ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }} ./
             docker tag ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest
           fi
           
