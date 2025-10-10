@@ -70,8 +70,17 @@ jobs:
             echo ${{ secrets.CLIENT_ENV_PRODUCTION }} > ./client/.env.production
             echo ${{ secrets.CLIENT_ENV_DEVELOPMENT }} > ./client/.env.development
             yarn --cwd ./client build
-            scp -r ./client/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/${{ secrets.SSH_USER }}/inear/nginx/html/
           fi
+
+      - name: Copy files via SCP
+        if: env.CLIENT_FILE_CHANGED == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./client/dist/"
+          target: "/home/${{ secrets.SSH_USER }}/inear/nginx/html/"
 
       # Docker Compose로 전체 애플리케이션 빌드 및 실행 (테스트용)
       - name: Run Docker Compose for testing
