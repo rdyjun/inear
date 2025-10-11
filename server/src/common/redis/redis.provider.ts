@@ -1,15 +1,13 @@
-import { ConfigService } from '@nestjs/config';
+import 'dotenv/config';
 import { createClient, RedisClientType } from 'redis';
 
-export const createRedisProvider = async (
-  configService: ConfigService,
-): Promise<RedisClientType> => {
+export const createRedisProvider = async (): Promise<RedisClientType> => {
   const client = createClient({
     socket: {
-      host: configService.get<string>('REDIS_HOST'),
-      port: configService.get<number>('REDIS_PORT'),
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT),
     },
-    password: configService.get<string>('REDIS_PASSWORD'),
+    password: process.env.REDIS_PASSWORD,
   }) as RedisClientType;
 
   await client.connect();
