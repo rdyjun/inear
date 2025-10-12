@@ -65,18 +65,21 @@ export class AlbumRepository {
     await this.save(album);
   }
 
-  async updateReleaseDate(albumId: string, minutes: number): Promise<void> {
+  async updateReleaseDate(albumId: string, now: Date): Promise<void> {
     const album = await this.findById(albumId);
     if (!album) {
       throw new NotFoundException(`Album ${albumId} not found`);
     }
 
+    // 10분 단위로 releaseDate 설정
+    // 예: 10:03 -> 10:00, 10:11 -> 10:10
+    const releaseDate = new Date(Math.floor(now.getTime() / (30 * 60 * 1000) * (30 * 60 * 1000) + 30));
+    console.log('Setting releaseDate to:', releaseDate);
+
     await this.repository
       .createQueryBuilder()
       .update(Album)
-      .set({
-        releaseDate: () => `DATE_ADD(release_date, INTERVAL ${minutes} MINUTE)`,
-      })
+      .set({ releaseDate })
       .where('id = :albumId', { albumId })
       .execute();
   }

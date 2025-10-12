@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SchedulerService {
-  private readonly MINUTES = 30;
   private readonly ROOM_ID: string;
   constructor(
     @Inject(REDIS_CLIENT) private readonly redisClient: RedisClientType,
@@ -24,7 +23,7 @@ export class SchedulerService {
       `SCHEDULAR EXECUTED TO UPDATE TIME, Current time (KST): ${currentTime.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`,
     );
     try {
-      await this.albumRepository.updateReleaseDate(this.ROOM_ID, this.MINUTES);
+      await this.albumRepository.updateReleaseDate(this.ROOM_ID, new Date());
       const updatedMySQLTime = await this.albumRepository.getReleaseDate(
         this.ROOM_ID,
       );
