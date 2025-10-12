@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3 } from 'aws-sdk';
 import { EmojiRequestDto } from './dto/emoji-request.dto';
 import { S3Bucket } from '@/common/s3/s3.bucket';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class EmojiService {
-  private readonly s3: S3;
+  private readonly s3: S3Client;
 
   constructor(private readonly configService: ConfigService,
               private readonly s3Bucket: S3Bucket) {
@@ -14,16 +15,20 @@ export class EmojiService {
   }
 
   async generateImageUrl(req: EmojiRequestDto): Promise<string> {
-    // URL 유효 시간 = 5분
     const key = `emoji/${req.sessionId}/${req.emojiId}/${req.emojiName}.png`; // TODO : 이모지는 무슨 형식으로 저장해야 하는지 확인
 
     const s3Params = {
-      Bucket: this.configService.get('S3_BUCKET_NAME'),
+      Bucket: this.configService.get<string>('S3_BUCKET_NAME'),
       Key: key,
-      Expires: this.configService.get<number>('S3_URL_EXPIRATION_SECONDS'),
       ContentType: 'image/png',
     };
 
-    return this.s3.getSignedUrlPromise('putObject', s3Params);
+    const command = new PutObjectCommand(s3Params);
+
+    const expiresIn = this.configService.get<number>('S3_URL_EXPIRATION_SECONDS');
+
+    return getSignedUrl(this.s3, command, {
+      expiresIn: expiresIn,
+    });
   }
 }

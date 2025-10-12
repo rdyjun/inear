@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import * as AWS from 'aws-sdk';
 import ffmpeg from 'fluent-ffmpeg';
-import path, { join } from 'path';
+import path from 'path';
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { SongDto } from '@/admin/dto/song.dto';
 import { S3Bucket } from '@/common/s3/s3.bucket';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 interface SongMetadata extends SongDto {
   albumId: string;
@@ -14,8 +14,9 @@ interface SongMetadata extends SongDto {
 
 @Injectable()
 export class MusicProcessingSevice {
-  private objectStorage: AWS.S3;
+  private objectStorage: S3Client;
   private bucketName: string;
+
   constructor(private configService: ConfigService,
               private readonly s3Bucket: S3Bucket) {
     this.objectStorage = s3Bucket.getInstance();
@@ -98,17 +99,20 @@ export class MusicProcessingSevice {
       const contentType = fileName.endsWith('.m3u8')
         ? 'application/x-mpegURL'
         : 'video/MP2T';
-      await this.objectStorage
-        .putObject({
-          Bucket: this.bucketName,
-          Key: `${s3DirectoryName}/${fileName}`,
-          Body: fileStream,
-          ACL: 'public-read',
-          ContentType: contentType,
-        })
-        .promise();
 
-      fileStream.destroy();
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: `${s3DirectoryName}/${fileName}`,
+        Body: fileStream,
+        ACL: 'public-read',
+        ContentType: contentType,
+      });
+
+      try {
+        await this.objectStorage.send(command);
+      } finally {
+        fileStream.destroy();
+      }
     });
 
     await Promise.all(uploadPromises);
