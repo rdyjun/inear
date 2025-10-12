@@ -10,7 +10,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/images': {
-        target: 'https://inear-music.kr.object.ncloudstorage.com',
+        target: process.env.S3_URL ?? '',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/images/, ''),
       },

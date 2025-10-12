@@ -41,7 +41,7 @@ export function AlbumPage() {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = albumJacketUrl.replace(
-      'https://inear-music.kr.object.ncloudstorage.com',
+      process.env.S3_URL ?? '',
       '/images',
     );
 
