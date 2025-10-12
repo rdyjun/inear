@@ -17,6 +17,7 @@ import { SchedulerService } from './common/scheduler/scheduler.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Comment } from './comment/comment.entity';
 import { CommentModule } from './comment/comment.module';
+import { S3Module } from '@/common/s3/s3.module';
 
 @Module({
   imports: [
@@ -40,8 +41,10 @@ import { CommentModule } from './comment/comment.module';
       database: process.env.DB_DATABASE,
       entities: [Album, Song, Comment],
     }),
+    S3Module,
   ],
   controllers: [AppController],
   providers: [Logger, MusicRepository, SchedulerService],
 })
-export class AppModule {}
+export class AppModule {
+}

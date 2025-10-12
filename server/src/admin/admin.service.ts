@@ -10,6 +10,7 @@ import { Album } from '@/album/album.entity';
 import { AdminRedisRepository } from '@/admin/admin.redis.repository';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { S3Bucket } from '@/common/s3/s3.bucket';
 
 @Injectable()
 export class AdminService {
@@ -21,15 +22,9 @@ export class AdminService {
     private readonly albumRepository: AlbumRepository,
     private readonly adminRedisRepository: AdminRedisRepository,
     private jwtService: JwtService,
+    private readonly s3Bucket: S3Bucket
   ) {
-    this.s3 = new AWS.S3({
-      endpoint: this.configService.get<string>('S3_END_POINT'),
-      region: this.configService.get<string>('S3_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get<string>('S3_ACCESS_KEY'),
-        secretAccessKey: this.configService.get<string>('S3_SECRET_KEY'),
-      },
-    });
+    this.s3 = s3Bucket.getInstance();
   }
 
   async login(adminKey: string) {

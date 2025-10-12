@@ -3,6 +3,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3 } from 'aws-sdk';
 import { Cache } from 'cache-manager';
+import { S3Bucket } from '@/common/s3/s3.bucket';
 
 @Injectable()
 export class S3CacheService {
@@ -10,15 +11,9 @@ export class S3CacheService {
   constructor(
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly s3Bucket: S3Bucket
   ) {
-    this.s3 = new S3({
-      endpoint: this.configService.get('S3_END_POINT'),
-      region: this.configService.get('S3_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get('S3_ACCESS_KEY'),
-        secretAccessKey: this.configService.get('S3_SECRET_KEY'),
-      },
-    });
+    this.s3 = s3Bucket.getInstance();
   }
 
   async fetchFromS3<T extends string | Buffer>({

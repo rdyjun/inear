@@ -2,20 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3 } from 'aws-sdk';
 import { EmojiRequestDto } from './dto/emoji-request.dto';
+import { S3Bucket } from '@/common/s3/s3.bucket';
 
 @Injectable()
 export class EmojiService {
   private readonly s3: S3;
 
-  constructor(private readonly configService: ConfigService) {
-    this.s3 = new S3({
-      endpoint: this.configService.get('S3_END_POINT'),
-      region: this.configService.get('S3_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get('S3_ACCESS_KEY'),
-        secretAccessKey: this.configService.get('S3_SECRET_KEY'),
-      },
-    });
+  constructor(private readonly configService: ConfigService,
+              private readonly s3Bucket: S3Bucket) {
+    this.s3 = s3Bucket.getInstance();
   }
 
   async generateImageUrl(req: EmojiRequestDto): Promise<string> {

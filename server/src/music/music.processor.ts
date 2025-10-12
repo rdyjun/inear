@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { SongDto } from '@/admin/dto/song.dto';
+import { S3Bucket } from '@/common/s3/s3.bucket';
 
 interface SongMetadata extends SongDto {
   albumId: string;
@@ -15,16 +16,9 @@ interface SongMetadata extends SongDto {
 export class MusicProcessingSevice {
   private objectStorage: AWS.S3;
   private bucketName: string;
-  constructor(private configService: ConfigService) {
-    const endpoint = this.configService.get<string>('S3_END_POINT');
-    this.objectStorage = new AWS.S3({
-      endpoint: new AWS.Endpoint(endpoint),
-      region: 'kr-standard',
-      credentials: {
-        accessKeyId: this.configService.get<string>('S3_ACCESS_KEY'),
-        secretAccessKey: this.configService.get<string>('S3_SECRET_KEY'),
-      },
-    });
+  constructor(private configService: ConfigService,
+              private readonly s3Bucket: S3Bucket) {
+    this.objectStorage = s3Bucket.getInstance();
     this.bucketName = this.configService.get<string>('S3_BUCKET_NAME');
   }
 

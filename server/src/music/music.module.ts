@@ -6,7 +6,7 @@ import { MusicService } from './music.service';
 import { MusicController } from './music.controller';
 import { MusicRepository } from './music.repository';
 import { M3U8Parser } from './parser/m3u8-parser';
-import { S3CacheService } from '../common/s3Cache/s3Cache.service';
+import { S3Module } from '@/common/s3/s3.module';
 
 @Module({
   imports: [
@@ -19,6 +19,7 @@ import { S3CacheService } from '../common/s3Cache/s3Cache.service';
       max: 1000,
       isGlobal: true,
     }),
+    S3Module,
   ],
   controllers: [MusicController],
   providers: [
@@ -26,8 +27,8 @@ import { S3CacheService } from '../common/s3Cache/s3Cache.service';
     MusicService,
     MusicRepository,
     M3U8Parser,
-    S3CacheService,
   ],
   exports: [MusicProcessingSevice, MusicRepository],
 })
-export class MusicModule {}
+export class MusicModule {
+}

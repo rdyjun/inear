@@ -13,6 +13,7 @@ import { AlbumModule } from '@/album/album.module';
 import { SongModule } from '@/song/song.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AdminTransactionService } from './admin.transaction.service';
+import { S3Module } from '@/common/s3/s3.module';
 
 @Module({
   imports: [
@@ -29,9 +30,11 @@ import { AdminTransactionService } from './admin.transaction.service';
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'temporary-secret-key',
     }),
+    S3Module,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminRedisRepository, AdminTransactionService],
   exports: [AdminService],
 })
-export class AdminModule {}
+export class AdminModule {
+}
