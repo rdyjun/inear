@@ -72,8 +72,11 @@ export class AdminService {
       });
 
       const result: { Location: string } = await parallelUploads3.done() as { Location: string };
+      const location = result.Location;
+      const endpoint = this.configService.get<string>('S3_END_POINT');
+      const s3CdnPrefix = this.configService.get<string>('S3_CDN_PREFIX');
 
-      return result.Location;
+      return `${s3CdnPrefix}/${location.replace(endpoint, '')}`;
 
     } catch (e) {
       console.error('S3 Upload Error:', e);
