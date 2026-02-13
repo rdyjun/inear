@@ -12370,7 +12370,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
-    "@nestjs/axios": "npm:^4.0.1"
     "@socket.io/redis-adapter": "npm:^8.3.0"
     "@types/fluent-ffmpeg": "npm:^2.1.27"
     "@typescript-eslint/eslint-plugin": "npm:^7.0.0"
@@ -12577,6 +12576,7 @@ __metadata:
     "@aws-sdk/s3-request-presigner": "npm:^3.908.0"
     "@ffmpeg-installer/ffmpeg": "npm:^1.1.0"
     "@nestjs/apollo": "npm:^12.1.0"
+    "@nestjs/axios": "npm:^4.0.1"
     "@nestjs/cache-manager": "npm:2.1.0"
     "@nestjs/cli": "npm:^10.0.0"
     "@nestjs/common": "npm:^10.4.6"

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
 import { STATUS_CODES } from 'node:http';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom } from 'rxjs';
 
 export interface SunoGenerationResponse {
   id: string;
@@ -23,17 +24,22 @@ export interface SunoGenerationResponse {
 export class SunoService {
   private readonly baseUrl = 'https://api.sunoapi.org';
 
+  constructor(private readonly httpService: HttpService) {
+  }
+
   async generateMusic(request: Record<string, any>): Promise<string> {
-    const response = await axios.post(
-      `${this.baseUrl}/api/v1/generate`,
-      request,
-      {
-        headers: {
-          'api-key': process.env.SUNO_API_KEY,
-          'Content-Type': 'application/json',
+    const response = await lastValueFrom(
+      this.httpService.post(
+        `${this.baseUrl}/api/v1/generate`,
+        request,
+        {
+          headers: {
+            'api-key': process.env.SUNO_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30 * 1000, // 30초 타임아웃(응답은 콜백)
         },
-        timeout: 30 * 1000, // 30초 타임아웃(응답은 콜백)
-      },
+      ),
     );
 
     if (response.status !== 200) {
