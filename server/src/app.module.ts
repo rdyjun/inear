@@ -18,6 +18,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Comment } from './comment/comment.entity';
 import { CommentModule } from './comment/comment.module';
 import { S3Module } from '@/common/s3/s3.module';
+import { SunoModule } from '@/suno/suno.module';
+import { FileService } from '@/common/converter/file.service';
 
 @Module({
   imports: [
@@ -42,9 +44,10 @@ import { S3Module } from '@/common/s3/s3.module';
       entities: [Album, Song, Comment],
     }),
     S3Module,
+    SunoModule,
   ],
   controllers: [AppController],
-  providers: [Logger, MusicRepository, SchedulerService],
+  providers: [Logger, MusicRepository, SchedulerService, FileService],
 })
 export class AppModule {
 }
