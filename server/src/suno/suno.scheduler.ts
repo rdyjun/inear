@@ -10,8 +10,9 @@ export class SunoScheduler {
   ) {
   }
 
-  // 9시 30분부터 18시 30분까지 매 시간 30분에 실행
-  @Cron('30 9-18 * * *')
+  // 11시 30분, 12시 30분, 17시 30분, 19시 30분에 실행
+  // 12시, 13시, 18시, 20시에 스트리밍
+  @Cron('30 11,12,17,19 * * *')
   async generateMusic() {
     const currentTime = new Date();
     console.log(
