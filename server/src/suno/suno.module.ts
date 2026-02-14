@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { SunoService } from './suno.service';
-import { ConfigModule } from '@nestjs/config';
 import { SunoScheduler } from '@/suno/suno.scheduler';
 import { SunoController } from '@/suno/suno.controller';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [HttpModule],
   controllers: [SunoController],
   providers: [SunoService, SunoScheduler],
   exports: [SunoService],
