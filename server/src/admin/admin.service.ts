@@ -12,6 +12,10 @@ import { S3Bucket } from '@/common/s3/s3.bucket';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Album } from '@/album/album.entity';
+import { AlbumDto } from '@/admin/dto/album.dto';
+import fs from 'fs/promises';
+import path from 'path';
+import { MusicProcessingSevice } from '@/music/music.processor';
 
 @Injectable()
 export class AdminService {
@@ -24,6 +28,7 @@ export class AdminService {
     private readonly adminRedisRepository: AdminRedisRepository,
     private jwtService: JwtService,
     private readonly s3Bucket: S3Bucket,
+    private readonly musicProcessingService: MusicProcessingSevice,
   ) {
     this.s3 = s3Bucket.getInstance();
   }
@@ -121,6 +126,35 @@ export class AdminService {
 
     const totalDuration = songDurations.reduce((acc, cur) => acc + cur, 0);
     await this.albumRepository.saveTotalDuration(album.id, totalDuration);
+  }
+
+  async processSongFiles(
+    songFiles: Express.Multer.File[],
+    albumData: AlbumDto,
+    albumId: string,
+  ): Promise<any> {
+    const tempDir = await this.createTempDirectory(albumId);
+
+    //Processed song 안에서 노래에 관한 모든 정보를 JSON 형태로 받을 수 있음
+    const processedSongs = await Promise.all(
+      songFiles.map(async (file, index) => {
+        const songInfo = albumData.songs[index];
+        return await this.musicProcessingService.processUpload(file, tempDir, {
+          albumId,
+          ...songInfo,
+        });
+      }),
+    );
+
+    await fs.rm(tempDir, { recursive: true, force: true });
+
+    return processedSongs;
+  }
+
+  private async createTempDirectory(albumId: string): Promise<string> {
+    const tempDir = path.join(__dirname, `album/${albumId}`);
+    await fs.mkdir(tempDir, { recursive: true });
+    return tempDir;
   }
 
   private async uploadImageFiles(

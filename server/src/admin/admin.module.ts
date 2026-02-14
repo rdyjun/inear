@@ -34,7 +34,7 @@ import { S3Module } from '@/common/s3/s3.module';
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminRedisRepository, AdminTransactionService],
-  exports: [AdminService],
+  exports: [AdminService, AdminTransactionService],
 })
 export class AdminModule {
 }
