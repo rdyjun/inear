@@ -1,4 +1,4 @@
-import { Body, Controller, Get } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SunoService } from '@/suno/suno.service';
 import { MissingSongFiles } from '@/common/exceptions/domain/song/missing-song-files.exception';
@@ -20,7 +20,7 @@ export class SunoController {
 
   @ApiOperation({ summary: 'suno 음원 생성 콜백 API' })
   @ApiResponse({ status: 200, description: 'Music generate success' })
-  @Get('/callback')
+  @Post('/callback')
   async callbackSunoAi(@Body() body: Record<string, any>): Promise<any> {
     for (const data of body.data) {
       const albumData = await this.sunoService.getAlbumData(data);

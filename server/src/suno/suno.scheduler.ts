@@ -25,7 +25,7 @@ export class SunoScheduler {
       callBackUrl: 'https://inear.live/api/suno/callback', // 생성 완료 후 콜백 URL
     };
 
-    const taskId = await this.sunoService.generateMusic(request);
-    console.log('Generated Suno AI music taskId:', taskId);
+    const response = await this.sunoService.generateMusic(request);
+    console.log('Generated Suno AI music response:', response);
   }
 }

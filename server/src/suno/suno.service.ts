@@ -34,7 +34,7 @@ export class SunoService {
               private readonly fileService: FileService) {
   }
 
-  async generateMusic(request: Record<string, any>): Promise<string> {
+  async generateMusic(request: Record<string, any>): Promise<any> {
     const response = await lastValueFrom(
       this.httpService.post(
         `${this.baseUrl}/api/v1/generate`,
@@ -53,7 +53,7 @@ export class SunoService {
       throw new Error(`Suno AI music generation failed: ${STATUS_CODES[response.status]} (${response.status})`);
     }
 
-    return response.data.taskId;
+    return response;
   }
 
   /**
