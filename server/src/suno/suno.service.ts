@@ -41,7 +41,7 @@ export class SunoService {
         request,
         {
           headers: {
-            'api-key': process.env.SUNO_API_KEY,
+            'Authorization': `Bearer ${process.env.SUNO_API_KEY}`,
             'Content-Type': 'application/json',
           },
           timeout: 30 * 1000, // 30초 타임아웃(응답은 콜백)
