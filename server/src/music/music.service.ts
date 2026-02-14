@@ -11,21 +11,24 @@ export class MusicService {
     private readonly musicRepository: MusicRepository,
     private readonly m3u8Parser: M3U8Parser,
     private readonly s3CacheService: S3CacheService,
-  ) {}
+  ) {
+  }
 
-  private async getM3U8Content(
+  async getSegmentContentForLoop(
     albumId: string,
-    songMetadata: { id: string; duration: number },
-  ): Promise<string> {
+    segmentId: string,
+  ): Promise<Buffer> {
+    const fixedSongIndex = 1; // 루프용 고정된 곡 인덱스
+
     return this.s3CacheService.fetchFromS3({
-      cacheKey: `m3u8:${albumId}:${songMetadata.id}`,
-      s3Key: `converted/${albumId}/${parseInt(songMetadata.id, 10)}/playlist.m3u8`,
-      cacheTTL: songMetadata.duration * 1000,
-      transform: (buffer) => buffer.toString(),
+      cacheKey: `segment:${albumId}:${fixedSongIndex}:${segmentId}`,
+      s3Key: `converted/${albumId}/${fixedSongIndex}/playlist${segmentId}.ts`,
+      cacheTTL: 3600000,
+      transform: (buffer) => buffer,
     });
   }
 
-  private async getSegmentContent(
+  async getSegmentContent(
     albumId: string,
     songIndex: string,
     segmentId: string,
@@ -57,11 +60,15 @@ export class MusicService {
     );
   }
 
-  async getSegment(
+  private async getM3U8Content(
     albumId: string,
-    songIndex: string,
-    segmentId: string,
-  ): Promise<Buffer> {
-    return await this.getSegmentContent(albumId, songIndex, segmentId);
+    songMetadata: { id: string; duration: number },
+  ): Promise<string> {
+    return this.s3CacheService.fetchFromS3({
+      cacheKey: `m3u8:${albumId}:${songMetadata.id}`,
+      s3Key: `converted/${albumId}/${parseInt(songMetadata.id, 10)}/playlist.m3u8`,
+      cacheTTL: songMetadata.duration * 1000,
+      transform: (buffer) => buffer.toString(),
+    });
   }
 }

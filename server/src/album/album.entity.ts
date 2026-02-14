@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { AlbumDto } from '@/admin/dto/album.dto';
 
 @Entity()
@@ -31,8 +31,9 @@ export class Album {
   @Column({ name: 'jacket_url', type: 'varchar', length: 500 })
   jacketUrl: string;
 
-  constructor(albumDto?: AlbumDto) {
+  constructor(albumDto?: AlbumDto, id?: string) {
     if (!albumDto) return;
+    if (id) this.id = id;
     this.title = albumDto.title;
     this.artist = albumDto.artist;
     this.tags = albumDto.tags;

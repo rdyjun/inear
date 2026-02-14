@@ -22,8 +22,9 @@ export class SunoController {
   @ApiResponse({ status: 200, description: 'Music generate success' })
   @Post('/callback')
   async callbackSunoAi(@Body() body: Record<string, any>): Promise<any> {
-    for (const data of body.data.data) {
-      const albumData = await this.sunoService.getAlbumData(data);
+    for (let songIndex = 0; songIndex < body.data.data.length; songIndex++) {
+      const data = body.data.data[songIndex];
+      const albumData = await this.sunoService.getAlbumData(data, songIndex);
       const files = await this.sunoService.getFiles(data);
 
       // 파일 생성 로직 호출
@@ -31,7 +32,8 @@ export class SunoController {
         throw new MissingSongFiles();
       }
       const album = await this.adminTransactionService.saveInitialAlbum(
-        new Album(albumData),
+        // 접미사 -1-l 는 음악 순서 및 루프를 의미
+        new Album(albumData, `${data.task_id}-${songIndex + 1}-l`),
       );
 
       const processedSongs = await this.adminService.processSongFiles(
