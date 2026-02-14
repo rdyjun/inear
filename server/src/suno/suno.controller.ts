@@ -22,7 +22,7 @@ export class SunoController {
   @ApiResponse({ status: 200, description: 'Music generate success' })
   @Post('/callback')
   async callbackSunoAi(@Body() body: Record<string, any>): Promise<any> {
-    for (const data of body.data) {
+    for (const data of body.data.data) {
       const albumData = await this.sunoService.getAlbumData(data);
       const files = await this.sunoService.getFiles(data);
 
