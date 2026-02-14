@@ -21,6 +21,7 @@ export class SunoScheduler {
     );
 
     const request = {
+      prompt: '모든 음악 장르 중 랜덤으로 생성', // 음악 생성에 사용할 프롬프트
       customMode: false,   // 사용자 정의 모드 사용 여부(가사, 분위기 등)
       instrumental: false, // 오디오를 가사 없는 반주로 할지 여부를 결정
       model: 'V5',         // 사용할 모델 선택
