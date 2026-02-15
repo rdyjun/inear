@@ -59,9 +59,10 @@ export class SunoService {
   /**
    * AlbumData 생성
    *
-   * @param data
+   * @param data          앨범 정보
+   * @param streamingHour 스트리밍할 시간
    */
-  async getAlbumData(data: Record<string, any>, plusHour: number): Promise<AlbumDto> {
+  async getAlbumData(data: Record<string, any>, streamingHour: number): Promise<AlbumDto> {
     const id: string = data.id;
     const audioUrl: string = data.audio_url;
     const title: string = data.title;
@@ -74,9 +75,9 @@ export class SunoService {
       return null;
     }
 
-    const now = (new Date()).getTime() + (plusHour * 60 * 60 * 1000);
-    // 9시 34분인 경우 -> 10시 정각
-    const releaseDate = new Date(Math.floor(now / this.cycle) * this.cycle + this.cycle);
+    // 오늘 날짜의 재생할 시간 설정
+    const releaseDate = new Date();
+    releaseDate.setHours(streamingHour, 0, 0, 0);
 
     // 1시간짜리 음악 정보 생성
     const song = {

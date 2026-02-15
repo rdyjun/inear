@@ -11,6 +11,27 @@ import { AdminService } from '@/admin/admin.service';
 @Controller('suno')
 export class SunoController {
 
+  // 스트리밍 시간 우선순위(시간 단위)
+  private streamingTime: number[] = [
+    12,
+    18,
+    20,
+    13,
+    11,
+    10,
+    19,
+    14,
+    15,
+    16,
+    17,
+    9,
+    21,
+    22,
+  ];
+
+  // 현재 시간 인덱스
+  private timeIndex = 0;
+
   constructor(
     private readonly adminTransactionService: AdminTransactionService,
     private readonly adminService: AdminService,
@@ -21,10 +42,12 @@ export class SunoController {
   @ApiOperation({ summary: 'suno 음원 생성 콜백 API' })
   @ApiResponse({ status: 200, description: 'Music generate success' })
   @Post('/callback')
-  async callbackSunoAi(@Body() body: Record<string, any>): Promise<any> {
+  async callbackSunoAi(@Body() body: Record<string, any>): Promise<void> {
     for (let songIndex = 0; songIndex < body.data.data.length; songIndex++) {
       const data = body.data.data[songIndex];
-      const albumData = await this.sunoService.getAlbumData(data, songIndex);
+      // timeIndex가 1씩 증가하며 음악이 재생될 시간대 선택
+      const streamingHour = this.streamingTime[this.timeIndex++ % this.streamingTime.length];
+      const albumData = await this.sunoService.getAlbumData(data, streamingHour);
       const files = await this.sunoService.getFiles(data);
 
       // 파일 생성 로직 호출
@@ -48,10 +71,6 @@ export class SunoController {
           await this.adminTransactionService.deleteCreatedAlbum(album.id);
           throw new AlbumCreationFailedException();
         });
-      return {
-        albumId: album.id,
-        message: 'Album songs updated to object storage successfully',
-      };
     }
   }
 }
