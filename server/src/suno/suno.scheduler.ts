@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { SunoService } from '@/suno/suno.service';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class SunoScheduler {
 
   // suno ai는 50크레딧 지급 및 2곡당 12크레딧 소모 (8곡 생성 가능)
   // 매일 자정마다 8곡 생성하여 콜백 URL로 전송
-  @Cron('0 0 * * *')
+  // @Cron('0 0 * * *')
   async generateMusic() {
     const currentTime = new Date();
     console.log(
