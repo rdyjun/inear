@@ -21,7 +21,7 @@ export class SunoScheduler {
     let musicCount = 0;
 
     // 음악이 생성될 때마다 콜백 URL로 전송되므로, 8곡이 생성될 때까지 반복하여 요청
-    while (true) {
+    while (await this.sunoService.hasRemainingCredit()) {
       const request = {
         prompt: '모든 음악 장르 중 랜덤으로 생성', // 음악 생성에 사용할 프롬프트
         customMode: false,   // 사용자 정의 모드 사용 여부(가사, 분위기 등)

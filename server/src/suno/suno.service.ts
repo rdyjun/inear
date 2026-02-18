@@ -137,6 +137,26 @@ export class SunoService {
     return files;
   }
 
+  async hasRemainingCredit(): Promise<boolean> {
+    const response = await lastValueFrom(
+      this.httpService.post(
+        'https://api.sunoapi.org/api/v1/generate/credit',
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.SUNO_API_KEY}`,
+          },
+          timeout: 30 * 1000, // 30초 타임아웃(응답은 콜백)
+        },
+      ),
+    );
+
+    if (response.status !== 200) {
+      throw new Error(`Suno AI music generation failed: ${STATUS_CODES[response.status]} (${response.status})`);
+    }
+
+    return response.data.data >= 12; // 12크레딧 이상 남아있어야 다음 곡 생성 가능
+  }
+
   private generateHourSongInfo(song: Record<string, any>, hour: number, duration: number) {
     const loopCount = hour / duration;
     const songs = [];
