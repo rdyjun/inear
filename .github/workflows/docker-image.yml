@@ -34,10 +34,9 @@ jobs:
 
       - name: Check file changes
         run: |
-          
           CLIENT_FILE_CHANGED=$(git diff --quiet ${{ github.event.before }} HEAD client && echo 'false' || echo 'true')
           SERVER_FILE_CHANGED=$(git diff --quiet ${{ github.event.before }} HEAD server && echo 'false' || echo 'true')
-          
+
           if [ "$CLIENT_FILE_CHANGED" == 'false' ] && [ "$SERVER_FILE_CHANGED" == 'false' ]; then
             echo "CLIENT_FILE_CHANGED=true" > $GITHUB_ENV
             echo "SERVER_FILE_CHANGED=true" >> $GITHUB_ENV
@@ -45,22 +44,6 @@ jobs:
             echo "CLIENT_FILE_CHANGED=$CLIENT_FILE_CHANGED" > $GITHUB_ENV
             echo "SERVER_FILE_CHANGED=$SERVER_FILE_CHANGED" >> $GITHUB_ENV
           fi
-
-#      # 서버 이미지 빌드 및 태그 지정
-#      - name: Build and tag Docker image
-#        run: |
-#          if [ "${{ env.SERVER_FILE_CHANGED }}" == 'true' ]; then
-#            docker build -f server/Dockerfile --platform linux/arm64 -t ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }} ./
-#            docker tag ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest
-#          fi
-#
-#          # 서버 이미지 푸시 (Docker Hub 또는 다른 레지스트리)
-#      - name: Push server image to Docker Hub
-#        run: |
-#          if [ "${{ env.SERVER_FILE_CHANGED }}" == 'true' ]; then
-#            docker push ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }}
-#            docker push ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest
-#          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -79,16 +62,24 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest
             ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:${{ github.sha }}
           push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # 클라이언트 및 nginx 이미지 빌드 및 태그 지정
-      - name: Build and tag client image
+      # 클라이언트 빌드
+      - name: Set up Node.js
+        if: env.CLIENT_FILE_CHANGED == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Build client
+        if: env.CLIENT_FILE_CHANGED == 'true'
         run: |
-          if [ "${{ env.CLIENT_FILE_CHANGED }}" == 'true' ]; then
-            yarn --cwd ./client install
-            echo ${{ secrets.CLIENT_ENV_PRODUCTION }} > ./client/.env.production
-            echo ${{ secrets.CLIENT_ENV_DEVELOPMENT }} > ./client/.env.development
-            yarn --cwd ./client build
-          fi
+          yarn --cwd ./client install --immutable
+          echo ${{ secrets.CLIENT_ENV_PRODUCTION }} > ./client/.env.production
+          echo ${{ secrets.CLIENT_ENV_DEVELOPMENT }} > ./client/.env.development
+          yarn --cwd ./client build
 
       - name: Copy files via SCP
         if: env.CLIENT_FILE_CHANGED == 'true'
@@ -99,12 +90,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "./client/dist/"
           target: "/home/${{ secrets.SSH_USER }}/inear/nginx/html/"
-
-      # Docker Compose로 전체 애플리케이션 빌드 및 실행 (테스트용)
-      - name: Run Docker Compose for testing
-        run: |
-          docker compose up --build -d
-        continue-on-error: false
 
       # 서버에서 파일을 최신화 하고, 배포 스크립트를 통해 실제 배포 진행
       - name: Deploy with Docker Compose on server
