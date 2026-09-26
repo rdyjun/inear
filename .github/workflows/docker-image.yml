@@ -89,7 +89,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "./client/dist/"
-          target: "/home/${{ secrets.SSH_USER }}/inear/nginx/html/"
+          target: "/opt/inear/nginx/html/"
 
       # 서버에서 파일을 최신화 하고, 배포 스크립트를 통해 실제 배포 진행
       - name: Deploy with Docker Compose on server
@@ -97,8 +97,7 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} " \
             SERVER_FILE_CHANGED=${{ env.SERVER_FILE_CHANGED }} && \
             CLIENT_FILE_CHANGED=${{ env.CLIENT_FILE_CHANGED }} && \
-            mkdir -p ~/inear && \
-            cd ~/inear && \
+            cd /opt/inear && \
             sudo docker system prune -af && \
             if [ \"\$SERVER_FILE_CHANGED\" == true ]; then
               sudo docker pull ${{ secrets.DOCKER_USERNAME }}/inear-server-oci:latest && \
