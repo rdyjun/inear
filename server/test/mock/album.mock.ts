@@ -26,19 +26,18 @@ export const createTestSongs = (): SongDto[] => [
   ),
 ];
 
-export const createTestAlbumData = (): AlbumDto => {
-  const albumDto = new AlbumDto();
-  albumDto.title = 'TEST ALBUM 1';
-  albumDto.artist = 'TEST ARTIST 1';
-  albumDto.releaseDate = new Date('2024-01-01');
-  albumDto.totalTracks = 2;
-  albumDto.songs = createTestSongs();
-  albumDto.tags = 'K-POP, TEST 1';
-  albumDto.totalDuration = 360;
-  albumDto.bannerUrl = '';
-  albumDto.jacketUrl = '';
-  return albumDto;
-};
+export const createTestAlbumData = (): AlbumDto =>
+  new AlbumDto(
+    'TEST ALBUM 1',
+    'TEST ARTIST 1',
+    new Date('2024-01-01'),
+    2,
+    createTestSongs(),
+    'K-POP, TEST 1',
+    360,
+    '',
+    '',
+  );
 
 export const createMockFiles = (): UploadedFiles => ({
   albumCover: {
