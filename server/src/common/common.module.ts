@@ -37,6 +37,7 @@ const services = [Logger];
 })
 export class CommonModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(LoggerContextMiddleware).forRoutes('*');
+    // Express 5 requires a named wildcard. `{*splat}` also matches the root path.
+    consumer.apply(LoggerContextMiddleware).forRoutes('{*splat}');
   }
 }
