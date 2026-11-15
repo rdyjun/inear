@@ -4,10 +4,19 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from '@/common/exceptions/global-exception.filter';
 import cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from '@/common/redis-adapter/redis-io.adapter';
+
+const processLogger = new Logger('Process');
+
+// Safety net for promises the Socket.IO Redis adapter does not await.
+// A listener stops Node from exiting; this one only logs.
+process.on('unhandledRejection', (reason: unknown) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  processLogger.error(`Unhandled rejection: ${error.message}`, error.stack);
+});
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {

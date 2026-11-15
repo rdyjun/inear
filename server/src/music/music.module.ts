@@ -7,6 +7,8 @@ import { MusicController } from './music.controller';
 import { MusicRepository } from './music.repository';
 import { M3U8Parser } from './parser/m3u8-parser';
 import { S3Module } from '@/common/s3/s3.module';
+import { AlbumModule } from '@/album/album.module';
+import { SongModule } from '@/song/song.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { S3Module } from '@/common/s3/s3.module';
       isGlobal: true,
     }),
     S3Module,
+    AlbumModule,
+    SongModule,
   ],
   controllers: [MusicController],
   providers: [
