@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REDIS_CLIENT } from '@/common/redis/redis.module';
+import { withRedisFallback } from '@/common/redis/redis.client';
 import { RedisClientType } from 'redis';
 
 @Injectable()
@@ -13,23 +14,39 @@ export class AlbumRedisRepository {
   }
 
   async getCurrentUsers(roomId: string): Promise<number> {
-    const roomKey = this.roomKey(roomId);
-    const currentUsers = await this.redisClient.hGet(roomKey, 'currentUsers');
-    return parseInt(currentUsers || '0', 10);
+    const counts = await this.getCurrentUsersAll([roomId]);
+    return counts[0] ?? 0;
   }
 
   async getCurrentUsersAll(roomIds: string[]): Promise<number[]> {
-    if (roomIds.length === 1) {
-      const count = await this.getCurrentUsers(roomIds[0]);
-      return [count];
+    if (roomIds.length === 0) {
+      return [];
     }
 
-    const pipeline = this.redisClient.multi();
-    roomIds.forEach((roomId) => {
-      const roomKey = this.roomKey(roomId);
-      pipeline.hGet(roomKey, 'currentUsers');
-    });
-    const results = await pipeline.exec();
-    return results.map((result) => (result ? parseInt(String(result), 10) : 0));
+    // Listener counts are display data. A Redis outage should not 500 the
+    // main banner; show zero listeners until Redis is back.
+    return withRedisFallback(
+      this.redisClient,
+      async () => {
+        if (roomIds.length === 1) {
+          const currentUsers = await this.redisClient.hGet(
+            this.roomKey(roomIds[0]),
+            'currentUsers',
+          );
+          return [parseInt(currentUsers || '0', 10)];
+        }
+
+        const pipeline = this.redisClient.multi();
+        roomIds.forEach((roomId) => {
+          pipeline.hGet(this.roomKey(roomId), 'currentUsers');
+        });
+        const results = await pipeline.exec();
+        return results.map((result) =>
+          result ? parseInt(String(result), 10) : 0,
+        );
+      },
+      roomIds.map(() => 0),
+      'album listener counts',
+    );
   }
 }
