@@ -28,7 +28,7 @@ export class LoggerContextMiddleware implements NestMiddleware {
     res.on('finish', () => {
       const { statusCode } = res;
       this.logger.log(`${ip} ${method} ${originalUrl} ${statusCode}`);
-      if (Object.keys(req.body).length !== 0) {
+      if (req.body && Object.keys(req.body).length !== 0) {
         this.logger.log(`Request body: ${JSON.stringify(req.body)}`);
       }
     });
