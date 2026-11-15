@@ -1,5 +1,5 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
 import { S3Bucket } from '@/common/s3/s3.bucket';
@@ -7,6 +7,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class S3CacheService {
+  private readonly logger = new Logger(S3CacheService.name);
   private readonly s3: S3Client;
 
   constructor(
@@ -17,18 +18,50 @@ export class S3CacheService {
     this.s3 = s3Bucket.getInstance();
   }
 
+  private async readCache<T>(cacheKey: string): Promise<T | undefined> {
+    try {
+      const cached = await this.cacheManager.get<T>(cacheKey);
+      // cache-manager v6 returns null on a miss; later releases return undefined.
+      if (cached === undefined || cached === null) {
+        return undefined;
+      }
+      return cached;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Cache read failed for ${cacheKey}; loading from S3: ${message}`,
+      );
+      return undefined;
+    }
+  }
+
+  private async writeCache(
+    cacheKey: string,
+    content: unknown,
+    cacheTTL: number,
+  ): Promise<void> {
+    try {
+      await this.cacheManager.set(cacheKey, content, cacheTTL);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Cache write failed for ${cacheKey}; serving the S3 object anyway: ${message}`,
+      );
+    }
+  }
+
   async fetchFromS3<T extends string | Buffer>({
-                                                 cacheKey,
-                                                 s3Key,
-                                                 cacheTTL,
-                                                 transform,
-                                               }: {
+    cacheKey,
+    s3Key,
+    cacheTTL,
+    transform,
+  }: {
     cacheKey: string;
     s3Key: string;
     cacheTTL: number;
     transform: (data: Buffer) => T;
   }): Promise<T> {
-    const cached = await this.cacheManager.get<T>(cacheKey);
+    const cached = await this.readCache<T>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -49,9 +82,8 @@ export class S3CacheService {
       const bodyBuffer = Buffer.concat(chunks);
 
       const content = transform(bodyBuffer);
-      await this.cacheManager.set(cacheKey, content, cacheTTL);
+      await this.writeCache(cacheKey, content, cacheTTL);
       return content;
-
     } catch (e) {
       if (e.name === 'NoSuchKey' || e.name === 'NotFound') {
         const fileType = cacheKey.startsWith('m3u8:') ? 'M3U8' : 'Segment(ts)';

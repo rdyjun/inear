@@ -10,6 +10,7 @@ import {
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoomRepository } from '@/room/room.repository';
 import { REDIS_CLIENT } from '@/common/redis/redis.module';
+import { withRedisFallback } from '@/common/redis/redis.client';
 import { RedisClientType } from 'redis';
 import * as crypto from 'node:crypto';
 import { RandomNameUtil } from '@/common/randomname/random-name.util';
@@ -41,7 +42,12 @@ export class RoomController {
   @Get('/:roomId')
   async getRoomInfo(@Param('roomId') roomId: string): Promise<any> {
     const roomKey = `rooms:${roomId}`;
-    const roomInfo = await this.redisClient.hGetAll(roomKey);
+    const roomInfo = await withRedisFallback(
+      this.redisClient,
+      () => this.redisClient.hGetAll(roomKey),
+      {} as Record<string, string>,
+      `room info ${roomId}`,
+    );
     const albumInfo = await this.albumRepository.findById(roomId);
     const albumResponse = await this.getAlbumResponseDto(albumInfo);
     const songList = await this.songRepository.getAlbumTracksSorted(

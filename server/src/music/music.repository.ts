@@ -1,8 +1,11 @@
-import { AlbumNotFoundByTimestampException } from '@/common/exceptions/domain/album/album-not-found-by-timestamp.exception';
 import { AlbumNotFoundException } from '@/common/exceptions/domain/album/album-not-found.exception';
 import { RoomNotFoundException } from '@/common/exceptions/domain/room/room-not-found.exception';
 import { REDIS_CLIENT } from '@/common/redis/redis.module';
-import { Inject, Injectable } from '@nestjs/common';
+import { isRedisUnavailableError } from '@/common/redis/redis.client';
+import { ORDER } from '@/common/constants/repository.constant';
+import { AlbumRepository } from '@/album/album.repository';
+import { SongRepository } from '@/song/song.repository';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 
 interface RoomSession {
@@ -18,8 +21,12 @@ interface SongMetadata {
 
 @Injectable()
 export class MusicRepository {
+  private readonly logger = new Logger(MusicRepository.name);
+
   constructor(
     @Inject(REDIS_CLIENT) private readonly redisClient: RedisClientType,
+    private readonly albumRepository: AlbumRepository,
+    private readonly songRepository: SongRepository,
   ) {}
 
   private albumKey(albumId: string): string {
@@ -27,6 +34,27 @@ export class MusicRepository {
   }
 
   private async getRoomSession(albumId: string): Promise<RoomSession> {
+    if (this.redisClient.isReady) {
+      try {
+        return await this.readRedisSession(albumId);
+      } catch (error) {
+        if (!isRedisUnavailableError(error)) {
+          throw error;
+        }
+        this.logger.warn(
+          `Redis session read failed for ${albumId}; falling back to the database`,
+        );
+      }
+    } else {
+      this.logger.warn(
+        `Redis is not ready for ${albumId}; falling back to the database`,
+      );
+    }
+
+    return this.readDatabaseSession(albumId);
+  }
+
+  private async readRedisSession(albumId: string): Promise<RoomSession> {
     const albumKey = this.albumKey(albumId);
     const exists = await this.redisClient.exists(albumKey);
 
@@ -45,6 +73,31 @@ export class MusicRepository {
     return {
       releaseTimestamp: parseInt(releaseTimestampStr, 10),
       songs: JSON.parse(songStr),
+    };
+  }
+
+  /**
+   * The streaming session written to Redis is the album release time plus
+   * each track's duration. Those rows live in MySQL, so playback can
+   * continue from the database while Redis is down.
+   */
+  private async readDatabaseSession(albumId: string): Promise<RoomSession> {
+    const album = await this.albumRepository.findById(albumId);
+    if (!album?.releaseDate) {
+      throw new AlbumNotFoundException(albumId);
+    }
+
+    const songs = await this.songRepository.getAlbumTracksSorted(
+      albumId,
+      ORDER.ASC,
+    );
+    if (!songs.length) {
+      throw new AlbumNotFoundException(albumId);
+    }
+
+    return {
+      releaseTimestamp: new Date(album.releaseDate).getTime(),
+      songs: songs.map((song) => song.duration),
     };
   }
 

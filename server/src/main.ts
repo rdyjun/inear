@@ -15,6 +15,8 @@ async function bootstrap() {
   });
 
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+  // Express 5 defaults to the simple query parser. Keep Express 4's qs parsing.
+  app.set('query parser', 'extended');
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());
