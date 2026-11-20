@@ -1,0 +1,102 @@
+# 서버(/opt/inear)에서 쓰던 compose 파일을 한 파일로 모은 것.
+# blue와 green은 프로필이 있어서 `docker compose up -d`만으로는 같이 뜨지 않는다.
+# 서비스 이름을 지정하면 그 서비스만 뜬다. 예: docker compose up -d redis
+#
+# nginx conf.d는 이 저장소에 없다. 여러 사이트가 쓰는 프록시라 여기서 바꾸지 않는다.
+# MySQL 볼륨은 기존 데이터를 그대로 쓴다. 시작 전에 `docker volume ls`로 이름을 확인하고,
+# inear_mysql-data가 아니면 .env의 MYSQL_VOLUME_NAME을 그 이름으로 맞춘다.
+
+name: inear
+
+services:
+  server-blue:
+    profiles: ['blue']
+    image: rdyjun/inear-server-oci:latest
+    container_name: server-blue
+    env_file:
+      - ../server.env
+    environment:
+      TZ: Asia/Seoul
+      NODE_ENV: development
+    networks:
+      - webapp
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q --spider http://localhost:3000/api/health || exit 1
+      interval: 7s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  server-green:
+    profiles: ['green']
+    image: rdyjun/inear-server-oci:latest
+    container_name: server-green
+    env_file:
+      - ../server.env
+    environment:
+      TZ: Asia/Seoul
+      NODE_ENV: development
+    networks:
+      - webapp
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q --spider http://localhost:3000/api/health || exit 1
+      interval: 7s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  database:
+    image: mysql:9.7.4
+    container_name: mysql
+    restart: unless-stopped
+    networks:
+      - webapp
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: inear
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:8.2.11
+    container_name: redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - /srv/inear/redis:/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - webapp
+
+  nginx:
+    image: nginx:1.30.7
+    platform: linux/arm64
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - /opt/inear/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /opt/inear/nginx/html/dist:/usr/share/nginx/html:ro
+    networks:
+      - webapp
+      - mc-chat-viewer
+
+networks:
+  webapp:
+    external: true
+    name: webapp
+  mc-chat-viewer:
+    external: true
+    name: mc-chat-viewer_default
+
+volumes:
+  mysql-data:
+    name: ${MYSQL_VOLUME_NAME:-inear_mysql-data}
+    external: true
