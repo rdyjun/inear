@@ -22,6 +22,9 @@ import { SunoModule } from './suno/suno.module';
 import { FileService } from './common/converter/file.service';
 import { HttpModule } from '@nestjs/axios';
 import { FileModule } from '@/common/converter/file.module';
+import { DatabaseConnectionService } from '@/common/database/database-connection.service';
+
+const dbPort = parseInt(process.env.DB_PORT ?? '', 10);
 
 @Module({
   imports: [
@@ -39,11 +42,13 @@ import { FileModule } from '@/common/converter/file.module';
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
+      port: Number.isFinite(dbPort) ? dbPort : 3306,
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       entities: [Album, Song, Comment],
+      retryAttempts: 0,
+      manualInitialization: true,
     }),
     S3Module,
     SunoModule,
@@ -51,7 +56,13 @@ import { FileModule } from '@/common/converter/file.module';
     FileModule,
   ],
   controllers: [AppController],
-  providers: [Logger, MusicRepository, SchedulerService, FileService],
+  providers: [
+    Logger,
+    MusicRepository,
+    SchedulerService,
+    FileService,
+    DatabaseConnectionService,
+  ],
 })
 export class AppModule {
 }

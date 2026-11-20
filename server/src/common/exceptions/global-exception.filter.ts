@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { isDependencyUnavailable } from '@/common/runtime/dependency';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -23,6 +24,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         time: new Date().toISOString(),
         ...this.getExceptionResponse(exception),
         errorName: exception.name,
+      });
+    }
+    if (isDependencyUnavailable(exception)) {
+      this.logException(exception, { path: request.url });
+      return response.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        message: '일시적으로 데이터베이스나 Redis를 사용할 수 없습니다.',
+        error: 'Service Unavailable',
+        time: new Date().toISOString(),
       });
     }
     // 예상치 못한 예외 처리

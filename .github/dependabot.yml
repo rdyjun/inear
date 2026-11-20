@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: docker
+    directories:
+      - "/client"
+      - "/nginx"
+      - "/server"
+    schedule:
+      interval: weekly
+    target-branch: dev
+
+  - package-ecosystem: docker-compose
+    directory: "/"
+    schedule:
+      interval: weekly
+    target-branch: dev
+
+  - package-ecosystem: docker-compose
+    directory: "/deploy"
+    schedule:
+      interval: weekly
+    target-branch: dev

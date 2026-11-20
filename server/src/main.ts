@@ -8,6 +8,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from '@/common/exceptions/global-exception.filter';
 import cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from '@/common/redis-adapter/redis-io.adapter';
+import { installProcessGuards } from '@/common/runtime/dependency';
+
+installProcessGuards();
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -41,13 +44,19 @@ async function bootstrap() {
     credentials: true,
   });
   await app.listen(process.env.PORT ?? 3000);
-  process.on('SIGTERM', async () => {
-    await redisIoAdapter.disconnectFromRedis();
-    await app.close();
+  const shutdown = async () => {
+    try {
+      await redisIoAdapter.disconnectFromRedis();
+      await app.close();
+    } catch (error) {
+      console.error('[shutdown]', error);
+    }
+  };
+  process.on('SIGTERM', () => {
+    void shutdown();
   });
-  process.on('SIGINT', async () => {
-    await redisIoAdapter.disconnectFromRedis();
-    await app.close();
+  process.on('SIGINT', () => {
+    void shutdown();
   });
 }
 
